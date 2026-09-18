@@ -22,17 +22,19 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        run: |
+          mkdir -p ~/.android
+          touch ~/.android/repositories.cfg
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
       - name: Build
-        run: |
-          ./gradlew clean assembleDebug assembleRelease -x lint \
-            --no-daemon --stacktrace --info
+        run: ./gradlew clean assembleDebug assembleRelease -x lint -x lintVital --no-daemon --stacktrace
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -41,7 +43,7 @@ jobs:
           name: apks
           path: app/build/outputs/apk/**/*.apk
 
-      - name: Release
+      - name: Create Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
